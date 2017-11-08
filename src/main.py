@@ -40,7 +40,8 @@ GPIO.setup(05,GPIO.OUT)
 GPIO.setup(06,GPIO.OUT)
 GPIO.output(05, GPIO.LOW)
 GPIO.output(06, GPIO.LOW)
-
+led=GPIO.PWM(25,1)
+led.start(0)
 
 def process_event(event):
     """Pretty prints events.
@@ -54,14 +55,18 @@ def process_event(event):
     if event.type == EventType.ON_CONVERSATION_TURN_STARTED:
         subprocess.Popen(["aplay", "/home/pi/GassistPi/sample-audio-files/Fb.wav"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         GPIO.output(05,GPIO.HIGH)
+        led.ChangeDutyCycle(100)
 
     if (event.type == EventType.ON_RESPONDING_STARTED and event.args and not event.args['is_error_response']):
-       GPIO.output(05,GPIO.LOW)
-       GPIO.output(06,GPIO.HIGH)
+        GPIO.output(05,GPIO.LOW)
+        GPIO.output(06,GPIO.HIGH)
+        led.ChangeDutyCycle(50)
+        
 
     if event.type == EventType.ON_RESPONDING_FINISHED:
-       GPIO.output(06,GPIO.LOW)
-       GPIO.output(05,GPIO.HIGH)
+        GPIO.output(06,GPIO.LOW)
+        GPIO.output(05,GPIO.HIGH)
+        led.ChangeDutyCycle(100)
 
 
     print(event)
@@ -70,6 +75,7 @@ def process_event(event):
             event.args and not event.args['with_follow_on_turn']):
         GPIO.output(05,GPIO.LOW)
         print()
+        led.ChangeDutyCycle(0)
 
 
 def main():
