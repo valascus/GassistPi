@@ -36,13 +36,16 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 #Indicator Pins
-GPIO.setup(25,GPIO.OUT)
-GPIO.setup(5,GPIO.OUT)
-GPIO.setup(6,GPIO.OUT)
+GPIO.setup(25, GPIO.OUT)
+GPIO.setup(5, GPIO.OUT)
+GPIO.setup(6, GPIO.OUT)
 GPIO.output(5, GPIO.LOW)
 GPIO.output(6, GPIO.LOW)
 led=GPIO.PWM(25,1)
 led.start(0)
+
+
+
 
 def process_event(event):
     """Pretty prints events.
@@ -59,15 +62,14 @@ def process_event(event):
         led.ChangeDutyCycle(100)
 
     if (event.type == EventType.ON_RESPONDING_STARTED and event.args and not event.args['is_error_response']):
-        GPIO.output(5,GPIO.LOW)
-        GPIO.output(6,GPIO.HIGH)
-        led.ChangeDutyCycle(50)
-        
+       GPIO.output(5,GPIO.LOW)
+       GPIO.output(6,GPIO.HIGH)
+       led.ChangeDutyCycle(50)
 
     if event.type == EventType.ON_RESPONDING_FINISHED:
-        GPIO.output(6,GPIO.LOW)
-        GPIO.output(5,GPIO.HIGH)
-        led.ChangeDutyCycle(100)
+       GPIO.output(6,GPIO.LOW)
+       GPIO.output(5,GPIO.HIGH)
+       led.ChangeDutyCycle(100)
 
 
     print(event)
@@ -75,8 +77,8 @@ def process_event(event):
     if (event.type == EventType.ON_CONVERSATION_TURN_FINISHED and
             event.args and not event.args['with_follow_on_turn']):
         GPIO.output(5,GPIO.LOW)
-        print()
         led.ChangeDutyCycle(0)
+        print()
 
 
 def main():
