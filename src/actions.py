@@ -29,6 +29,8 @@ ip='xxxxxxxxxxxx'
 devname=('Device 1', 'Device 2', 'Device 3')
 devid=('/Device1', '/Device2', '/Device3')
 
+gpio.init()
+
 for pin in gpioctrl:
     gpio.setcfg(port.pin, gpio.OUTPUT)
     gpio.output(port.pin, gpio.LOW)
