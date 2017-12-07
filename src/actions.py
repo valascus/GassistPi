@@ -5,18 +5,18 @@
 
 import os
 import os.path
-import RPi.GPIO as GPIO
+from pyA20.gpio import gpio
+from pyA20.gpio import port
 import time
 import re
 import subprocess
 import aftership
 import feedparser
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+
 #Number of entities in 'var' and 'PINS' should be the same
 var = ('kitchen lights', 'bathroom lights', 'bedroom lights')#Add whatever names you want. This is case is insensitive
-gpio = (12,13,24)#GPIOS for 'var'. Add other GPIOs that you want
+gpioctrl = (PA13,PA14,PA15)#GPIOS for 'var'. Add other GPIOs that you want
 
 #Number of station names and station links should be the same
 stnname=('Radio One', 'Radio 2', 'Radio 3', 'Radio 5')#Add more stations if you want
@@ -29,22 +29,16 @@ ip='xxxxxxxxxxxx'
 devname=('Device 1', 'Device 2', 'Device 3')
 devid=('/Device1', '/Device2', '/Device3')
 
-for pin in gpio:
-    GPIO.setup(pin, GPIO.OUT)
-    GPIO.output(pin, 0)
-
-#Servo pin declaration
-GPIO.setup(27, GPIO.OUT)
-pwm=GPIO.PWM(27, 50)
-pwm.start(0)
+for pin in gpioctrl:
+    gpio.setcfg(port.pin, gpio.OUTPUT)
+    gpio.output(port.pin, gpio.LOW)
+    
 
 #Stopbutton
-GPIO.setup(23, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+gpio.setcfg(port.PA16, gpio.INPUT)
+gpio.pullup(port.PA16, gpio.PULLUP)
 
-#Led Indicator
-GPIO.setup(25, GPIO.OUT)
-led=GPIO.PWM(25,1)
-led.start(0)
+
 
 playshell = None
 
@@ -96,15 +90,7 @@ def ESP(phrase):
             time.sleep(2)
             subprocess.Popen(["/usr/bin/pkill","elinks"],stdin=subprocess.PIPE)
 
-#Stepper Motor control
-def SetAngle(angle):
-    duty = angle/18 + 2
-    GPIO.output(27, True)
-    say("Moving motor by " + str(angle) + " degrees")
-    pwm.ChangeDutyCycle(duty)
-    time.sleep(1)
-    pwm.ChangeDutyCycle(0)
-    GPIO.output(27, False)
+
 
 #Play Youtube Music
 def YouTube(phrase):
@@ -168,7 +154,7 @@ def feed(phrase):
     title=feed['feed']['title']
     say(title)
     #To stop the feed, press and hold stop button
-    while GPIO.input(23):
+    while gpio.input(port.PA16):
         for x in range(0,numfeeds):
             content=feed['entries'][x]['title']
             print(content)
@@ -176,7 +162,7 @@ def feed(phrase):
             summary=feed['entries'][x]['summary']
             print(summary)
             say(summary)
-            if not GPIO.input(23):
+            if not gpio.input(port.PA16):
               break
         if x == numfeeds-1:
             break
@@ -192,18 +178,13 @@ def Action(phrase):
         time.sleep(10)
         os.system("sudo shutdown -h now")
         #subprocess.call(["shutdown -h now"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if 'motor' in phrase:
-        for s in re.findall(r'\b\d+\b', phrase):
-            SetAngle(int(s))
-    if 'zero' in phrase:
-        SetAngle(0)
     else:
         for num, name in enumerate(var):
             if name.lower() in phrase:
-                pinout=gpio[num]
+                pinout=gpioctrl[num]
                 if 'on' in phrase:
-                    GPIO.output(pinout, 1)
+                    gpio.output(port.pinout, gpio.HIGH)
                     say("Turning On " + name)
                 elif 'off' in phrase:
-                    GPIO.output(pinout, 0)
+                    gpio.output(port.pinout, gpio.LOW)
                     say("Turning Off " + name)
