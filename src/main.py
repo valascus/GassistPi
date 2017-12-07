@@ -16,12 +16,13 @@
 
 
 from __future__ import print_function
-import RPi.GPIO as GPIO
 import argparse
 import os.path
 import os
 import json
 import subprocess
+from pyA20.gpio import gpio
+from pyA20.gpio import port
 import google.oauth2.credentials
 from google.assistant.library import Assistant
 from google.assistant.library.event import EventType
@@ -34,19 +35,13 @@ from actions import ESP
 from actions import track
 from actions import feed
 
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-
+gpio.init()
 #Indicator Pins
-GPIO.setup(25, GPIO.OUT)
-GPIO.setup(5, GPIO.OUT)
-GPIO.setup(6, GPIO.OUT)
-GPIO.output(5, GPIO.LOW)
-GPIO.output(6, GPIO.LOW)
-led=GPIO.PWM(25,1)
-led.start(0)
+gpio.setcfg(port.PG6, gpio.OUTPUT)
+gpio.setcfg(port.PG7, gpio.OUTPUT)
 
+gpio.output(port.PG6, gpio.LOW)
+gpio.output(port.PG7, gpio.LOW)
 
 
 
@@ -61,26 +56,25 @@ def process_event(event):
     """
     if event.type == EventType.ON_CONVERSATION_TURN_STARTED:
         subprocess.Popen(["aplay", "/home/pi/GassistPi/sample-audio-files/Fb.wav"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        GPIO.output(5,GPIO.HIGH)
-        led.ChangeDutyCycle(100)
+        gpio.output(port.PG6, gpio.HIGH)
+        
 
     if (event.type == EventType.ON_RESPONDING_STARTED and event.args and not event.args['is_error_response']):
-       GPIO.output(5,GPIO.LOW)
-       GPIO.output(6,GPIO.HIGH)
-       led.ChangeDutyCycle(50)
+       gpio.output(port.PG6, gpio.LOW)
+       gpio.output(port.PG7, gpio.HIGH)
+       
+       
 
     if event.type == EventType.ON_RESPONDING_FINISHED:
-       GPIO.output(6,GPIO.LOW)
-       GPIO.output(5,GPIO.HIGH)
-       led.ChangeDutyCycle(100)
-
+       gpio.output(port.PG6, gpio.LOW)
+       gpio.output(port.PG7, gpio.LOW)
+      
 
     print(event)
 
     if (event.type == EventType.ON_CONVERSATION_TURN_FINISHED and
             event.args and not event.args['with_follow_on_turn']):
-        GPIO.output(5,GPIO.LOW)
-        led.ChangeDutyCycle(0)
+        gpio.output(port.PG6, gpio.LOW)
         print()
 
 
