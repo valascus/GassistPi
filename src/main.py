@@ -42,7 +42,8 @@ from gmusic import play_playlist
 from gmusic import play_songs
 from gmusic import play_album
 from gmusic import play_artist
-
+from gAssistLED.legacy.pixels import pixels
+from gAssistLED.beta import colorschemes
 #Login with default kodi/kodi credentials
 #kodi = Kodi("http://localhost:8080/jsonrpc")
 
@@ -51,17 +52,19 @@ from gmusic import play_artist
 kodi = Kodi("http://192.168.1.15:8080/jsonrpc", "kodi", "kodi")
 
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+#GPIO.setmode(GPIO.BCM)
+#GPIO.setwarnings(False)
 
 #Indicator Pins
-GPIO.setup(25, GPIO.OUT)
-GPIO.setup(5, GPIO.OUT)
-GPIO.setup(6, GPIO.OUT)
-GPIO.output(5, GPIO.LOW)
-GPIO.output(6, GPIO.LOW)
-led=GPIO.PWM(25,1)
-led.start(0)
+#GPIO.setup(25, GPIO.OUT)
+#GPIO.setup(5, GPIO.OUT)
+#GPIO.setup(6, GPIO.OUT)
+#GPIO.output(5, GPIO.LOW)
+#GPIO.output(6, GPIO.LOW)
+#led=GPIO.PWM(25,1)
+#led.start(0)
+
+NUM_LED = 12
 
 
 
@@ -89,37 +92,65 @@ def process_event(event, device_id):
     """
     if event.type == EventType.ON_CONVERSATION_TURN_STARTED:
         subprocess.Popen(["aplay", "/home/pi/GassistPi/sample-audio-files/Fb.wav"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        pixels.wakeup()
         #Uncomment the following after starting the Kodi
         #status=mutevolstatus()
         #vollevel=status[1]
         #with open('/home/pi/.volume.json', 'w') as f:
                #json.dump(vollevel, f)
         #kodi.Application.SetVolume({"volume": 0})
-        GPIO.output(5,GPIO.HIGH)
-        led.ChangeDutyCycle(100)
+        #GPIO.output(5,GPIO.HIGH)
+        #led.ChangeDutyCycle(100)
         print()
     print(event)
 
     if (event.type == EventType.ON_RESPONDING_STARTED and event.args and not event.args['is_error_response']):
-       GPIO.output(5,GPIO.LOW)
-       GPIO.output(6,GPIO.HIGH)
-       led.ChangeDutyCycle(50)
+       #GPIO.output(5,GPIO.LOW)
+       #GPIO.output(6,GPIO.HIGH)
+       #led.ChangeDutyCycle(50)
+       pixels.speak()
+       
+    if (event.type == EventType.ON_RESPONDING_STARTED and event.args and event.args['is_error_response']):
+       #GPIO.output(5,GPIO.LOW)
+       #GPIO.output(6,GPIO.HIGH)
+       #led.ChangeDutyCycle(50)
+       pixels.off()
 
     if event.type == EventType.ON_RESPONDING_FINISHED:
-       GPIO.output(6,GPIO.LOW)
-       GPIO.output(5,GPIO.HIGH)
-       led.ChangeDutyCycle(100)
-
-    print(event)
+       #GPIO.output(6,GPIO.LOW)
+       #GPIO.output(5,GPIO.HIGH)
+       #led.ChangeDutyCycle(100)
+        pixels.off()
+        
+        
+    if event.type == EventType.ON_CONVERSATION_TURN_TIMEOUT:
+       #GPIO.output(6,GPIO.LOW)
+       #GPIO.output(5,GPIO.HIGH)
+       #led.ChangeDutyCycle(100)
+        pixels.off()
 
     if (event.type == EventType.ON_CONVERSATION_TURN_FINISHED and
             event.args and not event.args['with_follow_on_turn']):
-        GPIO.output(5,GPIO.LOW)
-        led.ChangeDutyCycle(0)
+        
+        #GPIO.output(5,GPIO.LOW)
+        #led.ChangeDutyCycle(0)
         #Uncomment the following after starting the Kodi
         #with open('/home/pi/.volume.json', 'r') as f:
                #vollevel = json.load(f)
                #kodi.Application.SetVolume({"volume": vollevel})
+        pixels.off()
+        print()
+        
+    if (event.type == EventType.ON_CONVERSATION_TURN_FINISHED and
+            event.args and event.args['with_follow_on_turn']):
+        
+        #GPIO.output(5,GPIO.LOW)
+        #led.ChangeDutyCycle(0)
+        #Uncomment the following after starting the Kodi
+        #with open('/home/pi/.volume.json', 'r') as f:
+               #vollevel = json.load(f)
+               #kodi.Application.SetVolume({"volume": vollevel})
+        pixels.listen()
         print()
 
     if event.type == EventType.ON_DEVICE_ACTION:
@@ -181,6 +212,9 @@ def main():
     with Assistant(credentials, args.device_model_id) as assistant:
         subprocess.Popen(["aplay", "/home/pi/GassistPi/sample-audio-files/Startup.wav"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         events = assistant.start()
+        MY_CYCLE = colorschemes.TheaterChase(num_led=NUM_LED, pause_value=0.04,
+                                    num_steps_per_cycle=15, num_cycles=4)
+        MY_CYCLE.start()
         print('device_model_id:', args.device_model_id + '\n' +
               'device_id:', assistant.device_id + '\n')
         if args.project_id:
